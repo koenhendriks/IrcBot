@@ -1,16 +1,7 @@
 <?php
 
 require_once('inc/IRC.class.php');
-
-//Settings
-define('NICKNAME', 'Botnick');
-define('REALNAME', 'Ro Bot');
-define('IDENT', 'botter');
-define('NICK_PASS', 'secret');
-define('HOSTNAME', 0);
-define('SERVER', 'irc.freenode.net');
-define('PORT', 6667);
-$channels = array('#channel');
+require_once('config.php');
 
 //Construct min IRC class with settings
 $IRC = new IRC(NICKNAME, REALNAME, IDENT, NICK_PASS, $channels);
