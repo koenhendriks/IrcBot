@@ -21,6 +21,7 @@ class IRC {
     private $currentChannel;
     public $socket;
     public $curl;
+    public $data;
 
 
     /**
@@ -75,36 +76,27 @@ class IRC {
      * Exec a command on irc server
      */
     public function exec(){
-        $data = $this->getRawData();
-        if(isset($data[3]) && substr($data[3], 0, 2) == ':!'){
-            $cms = $data[3];
+        $data = $this->data;
 
-            if($data < 5) {
-                $this->write('Not enough parameters.');
-            }else{
-                $cmd = substr($cmd, 2);
+        if(substr($data->getMessage(), 0, 1) == '!'){
 
-            $rawUser = $data[0];
-            $channel = $data[2];
+            $params = explode(" ", $data->getMessage());
+
+            $cmd = ltrim ($params[0], '!');
+            $cmd = preg_replace('/\s+/', '', $cmd);
+
             switch($cmd){
                 case 'about':
-                    $this->writeChannel($channel, 'Hello, I\'m '.$this->getRealname().'. I\'m here to help you.');
+                    $this->writeChannel('Hello, I\'m '.$this->getRealname().'. I\'m here to help you.');
                     break;
                 case 'whoami':
-                    $user = $this->getUserInfo($rawUser);
-                    $this->writeChannel($channel, 'You are '.$rawUser);
+                    $this->writeChannel('You are '.$data->getUser());
                     break;
                 default:
-                    $this->writeChannel($channel, 'Unknown command.');
+                    $this->log("Unkown command: ".$cmd);
                     break;
-                }
             }
         }
-    }
-
-    public function getUserInfo($user){
-        //TODO: Create parser from raw data to array
-        return false;
     }
 
     /**
@@ -113,9 +105,10 @@ class IRC {
      * @param $channel
      * @param $data
      */
-    public function writeChannel($channel, $data){
-        socket_write($this->socket ,"PRIVMSG $channel :$data \r\n");
-        $this->log("Sending to channel $channel: $data");
+    public function writeChannel($send){
+        $data = $this->data;
+        socket_write($this->socket ,"PRIVMSG ".$data->getReceiver()." :$send \r\n");
+        $this->log("Sending to channel ".$data->getReceiver().": $send");
     }
 
     /**
@@ -196,7 +189,7 @@ class IRC {
      * @param $log
      */
     public function log($log){
-        echo "$log \n";
+        echo "\n $log \n";
 
         $filename = 'log-'.date('dmY',time()).'.txt';
 
@@ -213,38 +206,31 @@ class IRC {
 
     }
 
+    /**
+     * Check for urls in the users message
+     */
     public function handleURL(){
         // The Regular Expression filter
         $reg_exUrl = '#[-a-zA-Z0-9@:%_\+.~\#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~\#?&//=]*)?#si';
-        $data = $this->getRawData();
-        if(count($data) > 1 && isset($data[2]))
-            $currentChannel = $data[2];
-        else
-            $currentChannel = false;
+        $data = $this->data;
 
-        // Check if there is a url in the text
-        if($this->isInChannel() && $currentChannel && $data[0] != 'PING')
-        {
-            if (strpos($data[0],'nodejsbot') !== false) {
-                $this->log('Ignoring other bot');
-            }elseif($data[1] != 'NOTICE' && !is_numeric($data[1])){
-                $sayData = $output = array_slice($data, 3);
-                $matches  = preg_grep ($reg_exUrl, $sayData);
+        if($data->isValidUser() && $data->getUser() != 'nodejsbot'){
+            $message =  explode(" ",$data->getMessage());
+            $matches  = preg_grep ($reg_exUrl,$message);
 
-                if(count($matches) < 4)
-                {
-                    foreach($matches as $link){
-                        $link = $this->getLinkTitle($link);
+            if(count($matches) < 4)
+            {
+                foreach($matches as $link){
+                    $link = $this->getLinkTitle($link);
 
-                        if($link['urlfix'])
-                            $link['title'] .= ' ('.$link['url'].')';
+                    if($link['urlfix'])
+                        $link['title'] .= ' ('.$link['url'].')';
 
-                        if($link['title'] != '')
-                            $this->writeChannel($currentChannel, $link['title']);
-                    }
-                }else{
-                    $this->writeChannel($currentChannel, 'To many URL requests.');
+                    if($link['title'] != '')
+                        $this->writeChannel($link['title']);
                 }
+            }else{
+                $this->writeChannel('To many URL requests.');
             }
         }
     }
@@ -271,7 +257,7 @@ class IRC {
         if(isset($size['status']) && $size['status'] != 200 && ($size['status'] < 300 || $size['status'] > 307)) {
             return array('title' => 'Http error ' . $size['status'], 'urlfix' => false);
         }elseif(is_numeric($size['size']) && ($size['size'] == 0 || $size['size'] > 5000000)) {
-            return array('title' => 'File is to big', $urlfix => false);
+            return array('title' => 'File is to big', 'urlFix' => false);
         }
 
         $ctx = stream_context_create(array('http'=>
@@ -294,10 +280,9 @@ class IRC {
     }
 
     /**
-     * Joins the channels from settomgs
+     * Joins the channels
      */
     public function joinChannels(){
-        $data = $this->getRawData();
         if(!$this->isInChannel()) {
 
             foreach ($this->getChannels() as $channel)
@@ -317,12 +302,12 @@ class IRC {
     }
 
     /**
-     * Responds to PING from IRC server so we dont get a broken pipe
+     * Responds to PING from IRC server so we dont get a broken pipe or ping timeout
      */
     public function stayAlive(){
-        $data = $this->getRawData();
-        if($data[0] == 'PING') {
-            $this->write('PONG '.$data[1]);
+        $data = $this->data;
+        if($data->getUser() == 'PING') {
+            $this->write('PONG '.$data->getFunction());
         }
     }
 
@@ -357,11 +342,19 @@ class IRC {
     }
 
     /**
+     * sets raw data and creates new Data class for further use
      * @param mixed $rawData
      */
     public function setRawData($rawData)
     {
+        $this->log($rawData);
         $this->rawData = $rawData;
+        $this->data = new Data($rawData);
+
+        if($this->data->getReceiverType() == 'channel' && $this->data->getFunction() == 'PRIVMSG'){
+            $this->log("User: ".$this->data->getUser()." says:");
+            $this->log($this->data->getMessage());
+        }
     }
 
     /**
