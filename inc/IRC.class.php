@@ -20,7 +20,10 @@ class IRC {
     private $rawData;
     private $currentChannel;
     public $socket;
-    public $curl;
+
+    /**
+     * @var Data
+     */
     public $data;
 
 
@@ -120,19 +123,19 @@ class IRC {
     public function getFileSize($url){
         // Assume failure.
         $result['size'] = 0;
-
-        $this->curl = curl_init( $url );
+        $result['status'] = 'unknown';
+        $curl = curl_init( $url );
 
         // Issue a HEAD request and follow any redirects.
-        curl_setopt( $this->curl, CURLOPT_NOBODY, true );
-        curl_setopt( $this->curl, CURLOPT_HEADER, true );
-        curl_setopt( $this->curl, CURLOPT_RETURNTRANSFER, true );
-        curl_setopt( $this->curl, CURLOPT_FOLLOWLOCATION, true );
-        curl_setopt( $this->curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36');
-        curl_setopt( $this->curl, CURLOPT_TIMEOUT_MS,3000);
+        curl_setopt( $curl, CURLOPT_NOBODY, true );
+        curl_setopt( $curl, CURLOPT_HEADER, true );
+        curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $curl, CURLOPT_FOLLOWLOCATION, true );
+        curl_setopt( $curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36');
+        curl_setopt( $curl, CURLOPT_TIMEOUT_MS,3000);
 
-        $data = curl_exec( $this->curl );
-        curl_close( $this->curl );
+        $data = curl_exec( $curl );
+        curl_close( $curl );
 
         if( $data ) {
             $content_length = "unknown";
@@ -150,6 +153,9 @@ class IRC {
             if( $status == 200 || ($status > 300 && $status <= 308) ) {
                 $result['size'] = $content_length;
             }
+
+        
+
 
             $result['status'] = $status;
         }
@@ -197,10 +203,10 @@ class IRC {
             fopen($filename, "w");
 
             if (!$handle = fopen($filename, 'a'))
-                $this->error("Cannot open file ($filename)");
+                $this->error("Cannot open log ($filename)");
 
             if (fwrite($handle, $log."\n") === FALSE)
-                $this->error("Cannot write to file ($filename)");
+                $this->error("Cannot write to log ($filename)");
 
             fclose($handle);
 
@@ -214,7 +220,7 @@ class IRC {
         $reg_exUrl = '#[-a-zA-Z0-9@:%_\+.~\#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~\#?&//=]*)?#si';
         $data = $this->data;
 
-        if($data->isValidUser() && $data->getUser() != 'nodejsbot'){
+        if($data->isValidUser() && $data->getUser() != 'nodejsbot'){ //TODO need blacklist for users to ignore
             $message =  explode(" ",$data->getMessage());
             $matches  = preg_grep ($reg_exUrl,$message);
 
@@ -252,21 +258,17 @@ class IRC {
             $urlFix = true;
         }
 
-        $size = $this->getFileSize($url);
+        $url = preg_replace('/\s+/', '', $url);
 
+        $size = $this->getFileSize($url);
+        
         if(isset($size['status']) && $size['status'] != 200 && ($size['status'] < 300 || $size['status'] > 307)) {
             return array('title' => 'Http error ' . $size['status'], 'urlfix' => false);
         }elseif(is_numeric($size['size']) && ($size['size'] == 0 || $size['size'] > 5000000)) {
             return array('title' => 'File is to big', 'urlFix' => false);
         }
 
-        $ctx = stream_context_create(array('http'=>
-            array(
-                'timeout' => 2, // 1 200 Seconds = 20 Minutes
-            )
-        ));
-
-        $str = file_get_contents($url, false, $ctx);
+        $str = file_get_contents($url);
         if(!$str){
             return array('title' => 'URL error', 'domain' => 'URL error', 'urlfix' => 'URL error', 'url' => 'Url error');
         }
