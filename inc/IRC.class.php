@@ -131,10 +131,14 @@ class IRC {
      * @param $error
      */
     public function error($error){
+        if($this->isInChannel())
+            $this->writeChannel('Fatal error, see log for details.');
         echo "\n";
         echo "/******************************************************************\\";
         echo "\n";
+        echo "\n";
         echo "   ERROR: ".$error;
+        echo "\n";
         echo "\n";
         echo "\\******************************************************************/";
         echo "\n";
