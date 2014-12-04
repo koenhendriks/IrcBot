@@ -88,12 +88,38 @@ class IRC {
             $cmd = ltrim ($params[0], '!');
             $cmd = preg_replace('/\s+/', '', $cmd);
 
+            $newMessage = explode($cmd." ", $data->getMessage());
+
+            $values = false;
+            if(isset($newMessage[1])){
+                $rawValues = $newMessage[1];
+                $values = explode(" ", $newMessage[1]);
+            }
+
             switch($cmd){
+                case 'random':
+                    $random = new Random();
+                    $this->writeChannel($random->getSentence());
+                    break;
                 case 'about':
                     $this->writeChannel('Hello, I\'m '.$this->getRealname().'. I\'m here to help you.');
                     break;
                 case 'whoami':
                     $this->writeChannel('You are '.$data->getUser());
+                    break;
+                case 'define':
+                    if(!$values)
+                        $this->writeChannel($data->getUser().': define what?');
+                    else{
+                        if(isset($rawValues)) {
+                            $Ud = new UrbanDictionary();
+                            $definition = $Ud->define($rawValues);
+                            if (!$definition)
+                                $this->writeChannel($data->getUser() . ': I have no idea what that means.');
+                            else
+                                $this->writeChannel($data->getUser() . ': ' . $definition);
+                        }
+                    }
                     break;
                 default:
                     $this->log("Unkown command: ".$cmd);

@@ -3,6 +3,8 @@
 require_once('inc/IRC.class.php');
 require_once('inc/Link.class.php');
 require_once('inc/Data.class.php');
+require_once('inc/UrbanDictionary.class.php');
+require_once('inc/Random.class.php');
 require_once('config.php');
 
 //Construct min IRC class with settings
