@@ -80,6 +80,8 @@ class IRC {
      */
     public function exec(){
         $data = $this->data;
+        if($data->getReceiver() == $this->getNickname())
+            return;
 
         if(substr($data->getMessage(), 0, 1) == '!'){
 
