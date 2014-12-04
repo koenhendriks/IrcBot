@@ -7,11 +7,34 @@
  */
 
 class Data {
+    /**
+     * @var User where the data came from
+     */
     private $user;
+
+    /**
+     * @var Connection of the user.
+     */
     private $connection;
+
+    /**
+     * @var IRC function that was called
+     */
     private $function;
+
+    /**
+     * @var The receiver of the data, either channel or this bot
+     */
     private $receiver;
+
+    /**
+     * @var Message that is send
+     */
     private $message;
+
+    /**
+     * @var bool if the user is a actual person
+     */
     private $validUser;
 
     /**
