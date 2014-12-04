@@ -29,14 +29,14 @@ class Data {
         $userString = explode("!~", $eData[0]);
 
         if(count($userString) > 1) {
+            $userString[0] = ltrim ($userString[0], ':');
             $this->setUser($userString[0]);
             $this->setConnection($userString[1]);
         }else {
+            $eData[0] = ltrim ($eData[0], ':');
             $this->setUser($eData[0]);
             $this->setConnection($eData[0]);
         }
-
-
 
         if(isset($eData[1]))
             $this->setFunction($eData[1]);
