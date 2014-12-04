@@ -108,6 +108,7 @@ class IRC {
                     $this->writeChannel('You are '.$data->getUser());
                     break;
                 case 'define':
+                case 'd':
                     if(!$values)
                         $this->writeChannel($data->getUser().': define what?');
                     else{
