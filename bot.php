@@ -1,6 +1,7 @@
 <?php
 
 require_once('inc/IRC.class.php');
+require_once('inc/Link.class.php');
 require_once('inc/Data.class.php');
 require_once('config.php');
 
