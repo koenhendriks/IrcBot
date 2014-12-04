@@ -165,7 +165,6 @@ class IRC {
                 $this->error("Cannot write to log ($filename)");
 
             fclose($handle);
-
     }
 
     /**
@@ -199,16 +198,46 @@ class IRC {
     }
 
     /**
+     * Handles functions that are applied on the bot
+     */
+    public function functionHandler()
+    {
+        $data = $this->data;
+        switch($data->getFunction()){
+            case 'JOIN':
+                $this->log('User '.$data->getUser().' joined '.$data->getReceiver());
+                break;
+            case 'KICK':
+                if($data->getMessage() == $this->getNickname()) {
+                    $this->log('I was kicked from ' . $data->getReceiver() . ' Trying to rejoin now.');
+                    $this->joinChannel($data->getReceiver());
+                }
+                break;
+            default:
+                $this->log('Function '.$data->getFunction().' was called, no action executed');
+        }
+    }
+
+    /**
      * Joins the channels
      */
     public function joinChannels(){
         if(!$this->isInChannel()) {
 
             foreach ($this->getChannels() as $channel)
-                $this->write('JOIN ' . $channel);
+                $this->joinChannel($channel);
 
             $this->setInChannel(true);
         }
+    }
+
+    /**
+     * Joins a single channel
+     *
+     * @param $channel
+     */
+    public function joinChannel($channel){
+        $this->write('JOIN ' . $channel);
     }
 
     /**
@@ -437,5 +466,4 @@ class IRC {
         $this->socket = $socket;
         return $this->socket;
     }
-
 }

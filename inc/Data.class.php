@@ -61,10 +61,14 @@ class Data {
             $this->setConnection($eData[0]);
         }
 
-        if(isset($eData[1]))
-            $this->setFunction($eData[1]);
         if(isset($eData[2]))
             $this->setReceiver($eData[2]);
+
+        if(isset($eData[1])){
+            $this->setFunction($eData[1]);
+            if($eData[1] == 'KICK')
+                $this->setMessage($eData[3]);
+        }
 
         if($this->getUser() && $this->getFunction() && $this->getFunction() == 'PRIVMSG' && $this->getReceiver()) {
             $message = explode($eData[0] ." ". $eData[1] ." ". $eData[2]." :", $data);
