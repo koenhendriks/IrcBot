@@ -107,6 +107,19 @@ class IRC {
                 case 'whoami':
                     $this->writeChannel('You are '.$data->getUser());
                     break;
+                case 'help':
+                    $commands = array(
+                        '!random' => 'Say something random',
+                        '!about' => 'About me :)',
+                        '!whoami' => 'Says who you are',
+                        '!define' => 'Define a word using the Urban Dictionary',
+                    );
+
+                    $this->writeChannel("These are the commands you can use:");
+                    foreach($commands as $command => $description){
+                        $this->writeChannel($command." --> ".$description);
+                    }
+                    break;
                 case 'define':
                 case 'd':
                     if(!$values)
