@@ -20,7 +20,15 @@ class UrbanDictionary {
         if(count($response) > 0) {
             if(count($response['list']) > 0) {
                 $definition = $response['list'][0];
-                return $response['list'][0]['definition'] . '(' . $response['list'][0]['permalink'] . ')';
+                $explain = $response['list'][0]['definition'];
+                $explain = preg_replace('/\s+\s+/', '', $explain);
+
+                if(strlen($explain) > 340) {
+                    $explain = substr($explain, 0, 300) . '...';
+                    return $explain . '... Read more: (' . $response['list'][0]['permalink'] . ')';
+                }else {
+                    return $response['list'][0]['definition'] . '(' . $response['list'][0]['permalink'] . ')';
+                }
             }
             return false;
         }
