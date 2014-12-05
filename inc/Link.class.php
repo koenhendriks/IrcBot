@@ -43,7 +43,7 @@ class Link {
         if(strlen($str)>0){
             preg_match("/\<title\>(.*)\<\/title\>/",$str,$title);
             $parse = parse_url($url);
-            return array('title' => $title[1], 'domain' => $parse['host'], 'urlfix' => $urlFix, 'url' => $url);
+            return array('title' => html_entity_decode($title[1]), 'domain' => $parse['host'], 'urlfix' => $urlFix, 'url' => $url);
         }
     }
 
