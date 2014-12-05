@@ -47,7 +47,10 @@ class IRC {
     public function __construct($nickname, $realname, $ident, $nick_pass ='', $channels = array(), $server = 'irc.freenode.net', $port = 6667, $hostname = 0){
 
         $this->_registry = Registry::getInstance();
+
+        //Setting defaults
         $this->__set('helpTime', (time() - 10));
+        $this->__set('confirmedAdmin', false);
 
         //Set the config
         $this->setNickname($nickname);
@@ -89,8 +92,21 @@ class IRC {
     public function exec(){
         $data = $this->data;
 
-        if($data->getReceiver() == $this->getNickname())
+        if($data->getReceiver() == $this->getNickname() && $data->getUser() != ADMINNICK)
             return;
+
+        if($data->getReceiver() == $this->getNickname() && $data->getUser() == ADMINNICK) {
+            if(!$this->__get('confirmedAdmin')){
+                if(trim($data->getMessage()) == ADMINPASS){
+                    $this->__set('confirmedAdmin', true);
+                    $this->writeUser('Hello '.ADMINNICK.', you can now send commands.');
+                }else{
+                    $this->writeUser('Please authenticate with your password');
+                }
+            }else{
+                $this->write($data->getMessage());
+            }
+        }
 
         if(substr($data->getMessage(), 0, 1) == '!'){
 
@@ -171,6 +187,17 @@ class IRC {
         $data = $this->data;
         socket_write($this->socket ,"PRIVMSG ".$data->getReceiver()." :$send \r\n");
         $this->log("Sending to channel ".$data->getReceiver().": $send");
+    }
+
+    /**
+     * Write to a user
+     *
+     * @param $send
+     */
+    public function writeUser($send){
+        $data = $this->data;
+        socket_write($this->socket ,"PRIVMSG ".$data->getUser()." :$send \r\n");
+        $this->log("Sending to user ".$data->getUser().": $send");
     }
 
     /**
