@@ -134,6 +134,19 @@ class IRC {
                 case 'whoami':
                     $this->writeChannel('You are '.$data->getUser());
                     break;
+                case 'xkcd':
+                    if(!$values)
+                        $this->writeChannel($data->getUser().': Which xkcd?');
+                    else{
+                        if(isset($rawValues)){
+                            $xkcd = new Xkcd($rawValues);
+                            if($xkcd->get())
+                                $this->writeChannel($xkcd->get());
+                            else
+                                $this->writeChannel('Could not find that xkcd.');
+                        }
+                    }
+                    break;
                 case 'help':
 
                     if((time() - $this->__get('helpTime')) > 10) {
@@ -144,6 +157,7 @@ class IRC {
                             '!about' => 'About me :)',
                             '!whoami' => 'Says who you are',
                             '!define' => 'Define a word using the Urban Dictionary',
+                            '!xkcd' => 'Get an xkcd by number',
                         );
 
                         $this->writeChannel("These are the commands you can use:");
