@@ -102,7 +102,7 @@ class Random {
      * @return mixed
      */
     public function getSentence(){
-        return $this->randoms[rand(0, count($this->randoms))];
+        return $this->randoms[rand(0, (count($this->randoms)-1))];
     }
 
 
