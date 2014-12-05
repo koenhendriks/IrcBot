@@ -26,6 +26,11 @@ class IRC {
      */
     public $data;
 
+    /**
+     * @var Registry
+     */
+    private $_registry;
+
 
     /**
      * Construct of the IRC bot. Socket created here.
@@ -40,6 +45,9 @@ class IRC {
      * @param int $hostname
      */
     public function __construct($nickname, $realname, $ident, $nick_pass ='', $channels = array(), $server = 'irc.freenode.net', $port = 6667, $hostname = 0){
+
+        $this->_registry = Registry::getInstance();
+        $this->__set('helpTime', (time() - 10));
 
         //Set the config
         $this->setNickname($nickname);
@@ -80,6 +88,7 @@ class IRC {
      */
     public function exec(){
         $data = $this->data;
+
         if($data->getReceiver() == $this->getNickname())
             return;
 
@@ -110,16 +119,23 @@ class IRC {
                     $this->writeChannel('You are '.$data->getUser());
                     break;
                 case 'help':
-                    $commands = array(
-                        '!random' => 'Say something random',
-                        '!about' => 'About me :)',
-                        '!whoami' => 'Says who you are',
-                        '!define' => 'Define a word using the Urban Dictionary',
-                    );
 
-                    $this->writeChannel("These are the commands you can use:");
-                    foreach($commands as $command => $description){
-                        $this->writeChannel($command." --> ".$description);
+                    if((time() - $this->__get('helpTime')) > 10) {
+                        $this->__set('helpTime', time());
+
+                        $commands = array(
+                            '!random' => 'Say something random',
+                            '!about' => 'About me :)',
+                            '!whoami' => 'Says who you are',
+                            '!define' => 'Define a word using the Urban Dictionary',
+                        );
+
+                        $this->writeChannel("These are the commands you can use:");
+                        foreach ($commands as $command => $description) {
+                            $this->writeChannel($command . " --> " . $description);
+                        }
+                    }else{
+                        $this->log('The help command can only run once every 10 seconds (anti-flood)');
                     }
                     break;
                 case 'define':
@@ -507,5 +523,25 @@ class IRC {
     {
         $this->socket = $socket;
         return $this->socket;
+    }
+
+    /**
+     * Puts a object into the defined registry
+     * @param string $index
+     * @param mixed $value
+     */
+    final public function __set($index, $value)
+    {
+        $this->_registry->$index = $value;
+    }
+
+    /**
+     * Gets a object from the defined registry
+     * @param  string $index
+     * @return mixed
+     */
+    final public function __get($index)
+    {
+        return $this->_registry->$index;
     }
 }
