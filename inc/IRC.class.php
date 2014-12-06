@@ -254,6 +254,9 @@ class IRC {
      * @param $log
      */
     public function log($log){
+
+        $log = date('H:i:s', time())." ".$log;
+
         echo "\n $log \n";
 
         $filename = 'log-'.date('dmY',time()).'.txt';
