@@ -92,9 +92,11 @@ class IRC {
     public function exec(){
         $data = $this->data;
 
+        //Ignore PM's TODO: create actions for non admin PM's
         if($data->getReceiver() == $this->getNickname() && $data->getUser() != ADMINNICK)
             return;
 
+        //Lets admin user send commands trough PM
         if($data->getReceiver() == $this->getNickname() && $data->getUser() == ADMINNICK) {
             if(!$this->__get('confirmedAdmin')){
                 if(trim($data->getMessage()) == ADMINPASS){
@@ -108,6 +110,7 @@ class IRC {
             }
         }
 
+        //Check if a command is given by a user
         if(substr($data->getMessage(), 0, 1) == '!'){
 
             $params = explode(" ", $data->getMessage());
@@ -115,14 +118,15 @@ class IRC {
             $cmd = ltrim ($params[0], '!');
             $cmd = preg_replace('/\s+/', '', $cmd);
 
+            //Get the parameters for a command
             $newMessage = explode($cmd." ", $data->getMessage());
-
             $values = false;
             if(isset($newMessage[1])){
                 $rawValues = $newMessage[1];
                 $values = explode(" ", $newMessage[1]);
             }
 
+            //Execute given command.
             switch($cmd){
                 case 'random':
                     $random = new Random();

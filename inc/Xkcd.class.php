@@ -19,7 +19,10 @@ class Xkcd {
         if(!$json)
             return false;
         $xkcd = json_decode($json);
+
+        //Create string in format xkcd: title (img url)
         $this->xkcd = 'xkcd: '.html_entity_decode($xkcd->safe_title).' ('.$xkcd->img.')';
+        return true;
     }
 
     /**
@@ -31,6 +34,12 @@ class Xkcd {
         return $this->xkcd;
     }
 
+    /**
+     * Gets the content from the xkcd API in json
+     *
+     * @param $id
+     * @return string
+     */
     public function getJson($id){
         $json = file_get_contents("http://xkcd.com/".rtrim($id)."/info.0.json");
         return $json;
