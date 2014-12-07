@@ -48,7 +48,7 @@ class IRC {
 
         $this->_registry = Registry::getInstance();
 
-        //Setting defaults
+        //Setting defaults in the registry
         $this->__set('helpTime', (time() - 10));
         $this->__set('confirmedAdmin', false);
 
@@ -309,18 +309,27 @@ class IRC {
     public function functionHandler()
     {
         $data = $this->data;
-        switch($data->getFunction()){
-            case 'JOIN':
-                $this->log('User '.$data->getUser().' joined '.$data->getReceiver());
-                break;
-            case 'KICK':
-                if($data->getMessage() == $this->getNickname()) {
-                    $this->log('I was kicked from ' . $data->getReceiver() . ' Trying to rejoin now.');
-                    $this->joinChannel($data->getReceiver());
-                }
-                break;
-            default:
-                $this->log('Function '.$data->getFunction().' was called, no action executed');
+        if($data->getUser() != 'PONG') {
+            switch ($data->getFunction()) {
+                case 'JOIN':
+                    //We can create actions here if a user joins a channel
+                    $this->log('User ' . $data->getUser() . ' joined ' . $data->getReceiver());
+                    break;
+                case 'KICK':
+                    //Creating rejoin on kick if bot gets kicked
+                    if ($data->getMessage() == $this->getNickname()) {
+                        $this->log('I was kicked from ' . $data->getReceiver() . ' Trying to rejoin now.');
+                        $this->joinChannel($data->getReceiver());
+                    }
+                    break;
+                case 'PRIVMSG':
+                    //We already got this in Exec() so we don't want to log this
+                    break;
+                default:
+                    $this->log('Function ' . $data->getFunction() . ' was called, no action executed');
+            }
+        }else{
+            //TODO create keep alive in function handler
         }
     }
 
