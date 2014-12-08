@@ -170,6 +170,8 @@ class IRC {
                             '!whoami' => 'Says who you are',
                             '!define' => 'Define a word using the Urban Dictionary',
                             '!xkcd' => '  Get an xkcd by number',
+                            '!movie' => ' Find movie info from text',
+                            '!imdb' => '  Find movie info from imdb code/Id',
                         );
 
                         $this->writeChannel("These are the commands you can use:");
