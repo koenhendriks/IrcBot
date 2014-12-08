@@ -132,6 +132,14 @@ class IRC {
                     $random = new Random();
                     $this->writeChannel($random->getSentence());
                     break;
+                case 'imdb':
+                    $movie = new Movie();
+                    $this->writeChannel($movie->getById($values[0]));
+                    break;
+                case 'movie':
+                    $movie  = new Movie();
+                    $this->writeChannel($movie->getByString($rawValues));
+                    break;
                 case 'about':
                     $this->writeChannel('Hello, I\'m '.$this->getRealname().'. I\'m here to help you.');
                     break;
@@ -158,10 +166,10 @@ class IRC {
 
                         $commands = array(
                             '!random' => 'Say something random',
-                            '!about' => 'About me :)',
+                            '!about' => ' About me :)',
                             '!whoami' => 'Says who you are',
                             '!define' => 'Define a word using the Urban Dictionary',
-                            '!xkcd' => 'Get an xkcd by number',
+                            '!xkcd' => '  Get an xkcd by number',
                         );
 
                         $this->writeChannel("These are the commands you can use:");
