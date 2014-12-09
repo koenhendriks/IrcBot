@@ -6,14 +6,19 @@
  * Date: 10/8/14
  */
 
-//Settings
-define('NICKNAME', 'Botnick');
-define('REALNAME', 'Ro Bot');
-define('IDENT', 'botter');
-define('NICK_PASS', 'secret');
+//IRC Settings
+define('NICKNAME', 'brouwer');
+define('REALNAME', 'Pieter Brouwer');
+define('IDENT', 'brouwer');
+define('NICK_PASS', 'botpass');
 define('HOSTNAME', 0);
 define('SERVER', 'irc.freenode.net');
 define('PORT', 6667);
-define('ADMINNICK', 'admin');
-define('ADMINPASS', 'secret');
-$channels = array('#channel');
+$channels = array('#tesingmybot');
+
+//Admin Settings
+define('ADMINNICK', 'Chameleon');
+define('ADMINPASS', 'habbo123');
+
+//Whoapi.com settings
+define('WHOIS_KEY', 'ab123cd4e5fgh6i78j9k012lm3n456o7');

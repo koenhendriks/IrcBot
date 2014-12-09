@@ -140,6 +140,14 @@ class IRC {
                 case 'about':
                     $this->writeChannel('Hello, I\'m '.$this->getRealname().'. I\'m here to help you.');
                     break;
+                case 'whois':
+                    if(!$values) {
+                        $this->writeChannel($data->getUser().': Which domain?');
+                    }else{
+                        $whois = new Whois();
+                        $this->writeChannel($whois->getDomain($values[0]));
+                    }
+                    break;
                 case 'whoami':
                     $this->writeChannel('You are '.$data->getUser());
                     break;
@@ -168,6 +176,7 @@ class IRC {
                             '!define or !d' => 'Define a word using the Urban Dictionary',
                             '!xkcd' => '  Get an xkcd by number',
                             '!movie or !imdb' => ' Find movie info from text',
+                            '!whois' => ' Get whois information on a domain'
                         );
 
                         $this->writeChannel("These are the commands you can use:");
@@ -283,9 +292,13 @@ class IRC {
      * Check for urls in the users message
      */
     public function handleURL(){
+        $data = $this->data;
+        if(substr($data->getMessage(), 0, 1) == '!'){
+            return;
+        }
+
         // The Regular Expression filter
         $reg_exUrl = '#[-a-zA-Z0-9@:%_\+.~\#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~\#?&//=]*)?#si';
-        $data = $this->data;
         $link = new Link();
 
         if($data->isValidUser() && $data->getUser() != 'nodejsbot'){ //TODO need blacklist for users to ignore
