@@ -1,15 +1,11 @@
 <?php
 
-require_once('inc/Registry.class.php');
-require_once('inc/IRC.class.php');
-require_once('inc/Link.class.php');
-require_once('inc/Data.class.php');
-require_once('inc/UrbanDictionary.class.php');
-require_once('inc/Xkcd.class.php');
-require_once('inc/Movie.class.php');
-require_once('inc/Whois.class.php');
-require_once('inc/Random.class.php');
+//Load Config and classes
 require_once('config.php');
+function __autoload($className) {
+    if(file_exists('inc/'.$className).'.class.php')
+        require_once 'inc/'.$className. '.class.php';
+}
 
 //Construct min IRC class with settings
 $IRC = new IRC(NICKNAME, REALNAME, IDENT, NICK_PASS, $channels);
