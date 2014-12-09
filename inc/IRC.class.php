@@ -176,15 +176,15 @@ class IRC {
                             '!define or !d' => 'Define a word using the Urban Dictionary',
                             '!xkcd' => '  Get an xkcd by number',
                             '!movie or !imdb' => ' Find movie info from text',
-                            '!whois' => ' Get whois information on a domain'
+                            '!whois' => ' Get whois information on a domain',
                         );
 
-                        $this->writeChannel("These are the commands you can use:");
+                        $this->writeUser("These are the commands you can use:");
                         foreach ($commands as $command => $description) {
-                            $this->writeChannel($command . " --> " . $description);
+                            $this->writeUser($command . " --> " . $description);
                         }
                     }else{
-                        $this->log('The help command can only run once every 10 seconds (anti-flood)');
+                        $this->writeUser('The help command can only run once every 10 seconds (anti-flood)');
                     }
                     break;
                 case 'define':
@@ -328,7 +328,7 @@ class IRC {
     public function functionHandler()
     {
         $data = $this->data;
-        if($data->getUser() != 'PONG') {
+        if($data->getUser() != 'PONG' && !is_numeric($data->getFunction())) {
             switch ($data->getFunction()) {
                 case 'JOIN':
                     //We can create actions here if a user joins a channel
