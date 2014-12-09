@@ -19,6 +19,7 @@ class IRC {
     private $inChannel = false;
     private $rawData;
     private $currentChannel;
+    public $users;
     public $socket;
 
     /**
@@ -110,6 +111,18 @@ class IRC {
             }
         }
 
+        if(is_array($this->users[$data->getReceiver()])) {
+            $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
+            foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
+                if (strpos($data->getMessage(), $user) !== false) {
+                   if($this->users[$data->getReceiver()][$user]->status == 'afk'){
+                      $this->writeChannel($data->getUser().': '.$user.' is afk at the moment.');
+                    }
+                }
+            }
+        }
+
+
         //Check if a command is given by a user
         if(substr($data->getMessage(), 0, 1) == '!'){
 
@@ -135,7 +148,20 @@ class IRC {
                 case 'imdb':
                 case 'movie':
                     $movie  = new Movie();
-                    $this->writeChannel($movie->getByString($rawValues));
+                    if (isset($rawValues))
+                        $this->writeChannel($movie->getByString($rawValues));
+                    else
+                        $this->writeChannel("Movie was not found.");
+                    break;
+                case 'lastseen':
+                    if(!$values){
+                        $this->writeChannel($data->getUser().' Who should i check?');
+                    } else {
+                        if(is_object($this->users[$data->getReceiver()][trim($values[0])])){
+                            $last = $this->users[$data->getReceiver()][trim($values[0])]->lastSeen;
+                            $this->writeChannel(trim($values[0]).' was last seen at '.date('H:i (l)', $last));
+                        }
+                    }
                     break;
                 case 'about':
                     $this->writeChannel('Hello, I\'m '.$this->getRealname().'. I\'m here to help you.');
@@ -147,6 +173,17 @@ class IRC {
                         $whois = new Whois();
                         $this->writeChannel($whois->getDomain($values[0]));
                     }
+                    break;
+                case 'away':
+                case 'afk':
+                    $user = $this->users[$data->getReceiver()][$data->getUser()];
+                    $user->setStatus('afk');
+                    $this->writeChannel($user->name.' is now afk');
+                    break;
+                case 'back':
+                    $user = $this->users[$data->getReceiver()][$data->getUser()];
+                    $user->setStatus('online');
+                    $this->writeChannel('Welcome back, '.$user->name);
                     break;
                 case 'whoami':
                     $this->writeChannel('You are '.$data->getUser());
@@ -177,6 +214,8 @@ class IRC {
                             '!xkcd' => '  Get an xkcd by number',
                             '!movie or !imdb' => ' Find movie info from text',
                             '!whois' => ' Get whois information on a domain',
+                            '!afk' => 'Sets a user status to afk',
+                            '!back' => 'removes afk status'
                         );
 
                         $this->writeUser("These are the commands you can use:");
@@ -334,6 +373,14 @@ class IRC {
                 case 'JOIN':
                     //We can create actions here if a user joins a channel
                     $this->log('User ' . $data->getUser() . ' joined ' . $data->getReceiver());
+                    $this->users[$data->getReceiver()][$data->getUser()] = new User(array(
+                        'name' => $data->getUser(),
+                        'connection' => $data->getConnection(),
+                        'status' => 'online',
+                        'lastSeen' => time(),
+                        'level' => 0,
+                        'group' => 'users'
+                    ));
                     break;
                 case 'KICK':
                     //Creating rejoin on kick if bot gets kicked
@@ -342,8 +389,10 @@ class IRC {
                         $this->joinChannel($data->getReceiver());
                     }
                     break;
+                case 'PART':
+                    $this->log('User ' . $data->getUser() . ' left ' . $data->getReceiver());
+                    break;
                 case 'PRIVMSG':
-                    //We already got this in Exec() so we don't want to log this
                     break;
                 default:
                     $this->log('Function ' . $data->getFunction() . ' was called, no action executed');
@@ -352,6 +401,38 @@ class IRC {
             // Responds to PING from IRC server so we dont get a broken pipe or ping timeout
             if($data->getUser() == 'PING') {
                 $this->write('PONG '.$data->getFunction());
+            }
+
+            //Message from server
+            if(is_numeric($data->getFunction())){
+                switch($data->getFunction()){
+                    //Getting name list of a channel
+                    case 353:
+                        $eData = explode(" ", $this->getRawData());
+                        $data->setReceiver($eData[4]);
+
+                        $this->users[rtrim($data->getReceiver())] = array();
+
+                        $this->log('Getting names of channel '.$data->getReceiver());
+
+                        $string = explode(':', ltrim($this->getRawData(),':'));
+                        $users = explode(' ',$string[1]);
+
+                        foreach($users as $user){
+                            $userObj = new User(array(
+                                'name' => trim($user),
+                                'connection' => '',
+                                'status' => 'online',
+                                'lastSeen' => time(),
+                                'level' => 0,
+                                'group' => 'users'
+                            ));
+                           $this->users[rtrim($data->getReceiver())][trim($user)] = $userObj;
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }
@@ -364,6 +445,7 @@ class IRC {
 
             foreach ($this->getChannels() as $channel)
                 $this->joinChannel($channel);
+
 
             $this->setInChannel(true);
         }
