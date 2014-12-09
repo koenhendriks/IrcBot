@@ -183,6 +183,7 @@ class IRC {
                         foreach ($commands as $command => $description) {
                             $this->writeUser($command . " --> " . $description);
                         }
+                        $this->writeChannel($data->getUser().': Check your private messages.');
                     }else{
                         $this->writeUser('The help command can only run once every 10 seconds (anti-flood)');
                     }
@@ -328,7 +329,7 @@ class IRC {
     public function functionHandler()
     {
         $data = $this->data;
-        if($data->getUser() != 'PONG' && !is_numeric($data->getFunction())) {
+        if($data->getUser() != 'PING' && !is_numeric($data->getFunction())) {
             switch ($data->getFunction()) {
                 case 'JOIN':
                     //We can create actions here if a user joins a channel
@@ -348,7 +349,10 @@ class IRC {
                     $this->log('Function ' . $data->getFunction() . ' was called, no action executed');
             }
         }else{
-            //TODO create keep alive in function handler
+            // Responds to PING from IRC server so we dont get a broken pipe or ping timeout
+            if($data->getUser() == 'PING') {
+                $this->write('PONG '.$data->getFunction());
+            }
         }
     }
 
@@ -381,16 +385,6 @@ class IRC {
         $data = $this->getRawData();
         if(isset($data[3]) && $data[3] == ':End')
             $this->write('PRIVMSG nickserv :identify '.$this->getIdent().' '.$this->getNickPass());
-    }
-
-    /**
-     * Responds to PING from IRC server so we dont get a broken pipe or ping timeout
-     */
-    public function stayAlive(){
-        $data = $this->data;
-        if($data->getUser() == 'PING') {
-            $this->write('PONG '.$data->getFunction());
-        }
     }
 
     /**

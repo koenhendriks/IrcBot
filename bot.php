@@ -26,7 +26,6 @@ while($data = socket_read($IRC->socket ,65000,PHP_NORMAL_READ)) {
     if($IRC->isInChannel()){
         $IRC->handleURL();
         $IRC->functionHandler();
-        $IRC->stayAlive();
         $IRC->exec();
     }
 }
