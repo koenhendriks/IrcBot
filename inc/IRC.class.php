@@ -180,8 +180,11 @@ class IRC {
                     $this->writeChannel($data->getUser().' is now afk');
                     break;
                 case 'back':
-                    $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'online';
-                    $this->writeChannel('Welcome back, '.$data->getUser());
+                    $status = trim($this->users[$data->getReceiver()][trim($data->getUser())]->status);
+                    if($status == 'afk') {
+                        $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'online';
+                        $this->writeChannel('Welcome back, ' . $data->getUser());
+                    }
                     break;
                 case 'whoami':
                     $this->writeChannel('You are '.$data->getUser());
