@@ -111,18 +111,6 @@ class IRC {
             }
         }
 
-        if(is_array($this->users[$data->getReceiver()])) {
-            $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
-            foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
-                if (strpos($data->getMessage(), $user) !== false) {
-                   if($this->users[$data->getReceiver()][$user]->status == 'afk'){
-                      $this->writeChannel($data->getUser().': '.$user.' is afk at the moment.');
-                    }
-                }
-            }
-        }
-
-
         //Check if a command is given by a user
         if(substr($data->getMessage(), 0, 1) == '!'){
 
@@ -364,13 +352,35 @@ class IRC {
     }
 
     /**
-     * Handles functions that are applied on the bot
+     * Check if a user is afk when some one mentions him
      */
-    public function functionHandler()
+    public function checkAfk(){
+        $data = $this->data;
+        if(is_array($this->users[$data->getReceiver()])) {
+            $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
+            foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
+                if (strpos($data->getMessage(), $user.':') !== false) {
+                    if($this->users[$data->getReceiver()][$user]->status == 'afk'){
+                        $this->writeUser($data->getUser().': '.$user.' is afk at the moment.');
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Handles functions that are applied on the bot
+     *
+     * @param $function
+     * @param $params
+     */
+    public function functionHandler($function = false, $params = array())
     {
         $data = $this->data;
+        if(!$function)
+            $function = $data->getFunction();
         if($data->getUser() != 'PING' && !is_numeric($data->getFunction())) {
-            switch ($data->getFunction()) {
+            switch ($function) {
                 case 'JOIN':
                     //We can create actions here if a user joins a channel
                     $this->log('User ' . $data->getUser() . ' joined ' . $data->getReceiver());
