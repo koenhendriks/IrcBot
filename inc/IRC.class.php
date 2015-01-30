@@ -111,18 +111,6 @@ class IRC {
             }
         }
 
-        if(is_array($this->users[$data->getReceiver()])) {
-            $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
-            foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
-                if (strpos($data->getMessage(), $user) !== false) {
-                   if($this->users[$data->getReceiver()][$user]->status == 'afk'){
-                      $this->writeChannel($data->getUser().': '.$user.' is afk at the moment.');
-                    }
-                }
-            }
-        }
-
-
         //Check if a command is given by a user
         if(substr($data->getMessage(), 0, 1) == '!'){
 
@@ -176,14 +164,15 @@ class IRC {
                     break;
                 case 'away':
                 case 'afk':
-                    $user = $this->users[$data->getReceiver()][$data->getUser()];
-                    $user->setStatus('afk');
-                    $this->writeChannel($user->name.' is now afk');
+                    $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'afk';
+                    $this->writeChannel($data->getUser().' is now afk');
                     break;
                 case 'back':
-                    $user = $this->users[$data->getReceiver()][$data->getUser()];
-                    $user->setStatus('online');
-                    $this->writeChannel('Welcome back, '.$user->name);
+                    $status = trim($this->users[$data->getReceiver()][trim($data->getUser())]->status);
+                    if($status == 'afk') {
+                        $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'online';
+                        $this->writeChannel('Welcome back, ' . $data->getUser());
+                    }
                     break;
                 case 'whoami':
                     $this->writeChannel('You are '.$data->getUser());
@@ -225,6 +214,19 @@ class IRC {
                         $this->writeChannel($data->getUser().': Check your private messages.');
                     }else{
                         $this->writeUser('The help command can only run once every 10 seconds (anti-flood)');
+                    }
+                    break;
+                case 'rule':
+                case 'r':
+                    if(!$values)
+                        $this->writeChannel($data->getUser().': which rule?');
+                    else{
+                        $rules = new Rules();
+                        $rule = $rules->getRule(trim($values[0]));
+                        if($rule)
+                            $this->writeChannel('Rule '.trim($values[0]).': '.$rule);
+                        else
+                            $this->writeChannel('I don\'t know that rule.');
                     }
                     break;
                 case 'define':
@@ -363,13 +365,35 @@ class IRC {
     }
 
     /**
-     * Handles functions that are applied on the bot
+     * Check if a user is afk when some one mentions him
      */
-    public function functionHandler()
+    public function checkAfk(){
+        $data = $this->data;
+        if(is_array($this->users[$data->getReceiver()])) {
+            $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
+            foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
+                if (strpos($data->getMessage(), $user.':') !== false) {
+                    if($this->users[$data->getReceiver()][$user]->status == 'afk'){
+                        $this->writeUser($data->getUser().': '.$user.' is afk at the moment.');
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Handles functions that are applied on the bot
+     *
+     * @param $function
+     * @param $params
+     */
+    public function functionHandler($function = false, $params = array())
     {
         $data = $this->data;
+        if(!$function)
+            $function = $data->getFunction();
         if($data->getUser() != 'PING' && !is_numeric($data->getFunction())) {
-            switch ($data->getFunction()) {
+            switch ($function) {
                 case 'JOIN':
                     //We can create actions here if a user joins a channel
                     $this->log('User ' . $data->getUser() . ' joined ' . $data->getReceiver());
