@@ -164,7 +164,7 @@ class IRC {
                     break;
                 case 'busy':
                 case 'dnd':
-                    $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'dnd';
+                    $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'afk';
                     $this->writeChannel($data->getUser().' is now busy working! Why aren\'t you!?');
                     break;
                 case 'away':
@@ -224,6 +224,7 @@ class IRC {
                         $this->writeUser('The help command can only run once every 10 seconds (anti-flood)');
                     }
                     break;
+		case 'peter': $this->writeChannel('peter is cool :D'); break;
                 case 'define':
                 case 'd':
                     if(!$values)
