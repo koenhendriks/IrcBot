@@ -112,14 +112,10 @@ class IRC {
         }
 
         if(is_array($this->users[$data->getReceiver()])) {
-            $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
-            foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
-                if (strpos($data->getMessage(), $user) !== false) {
-                   if($this->users[$data->getReceiver()][$user]->status == 'afk'){
-                      $this->writeChannel($data->getUser().': '.$user.' is afk at the moment.');
-                    }
-                }
-            }
+            $channelUser = $this->users[$data->getReceiver()][$data->getUser()];
+            if(!is_object($channelUser))
+                $channelUser = new User(array('lastseen' => time()));
+            $channelUser->lastSeen = time();
         }
 
 
@@ -188,11 +184,8 @@ class IRC {
                 case 'available':
                 case 'disturbable':
                 case 'back':
-                    $status = trim($this->users[$data->getReceiver()][trim($data->getUser())]->status);
-                    if($status == 'afk') {
-                        $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'online';
-                        $this->writeChannel('Welcome back, ' . $data->getUser());
-                    }
+                    $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'online';
+                    $this->writeChannel('Welcome back, ' . $data->getUser());
                     break;
                 case 'whoami':
                     $this->writeChannel('You are '.$data->getUser());
@@ -224,7 +217,9 @@ class IRC {
                             '!movie or !imdb' => ' Find movie info from text',
                             '!whois' => ' Get whois information on a domain',
                             '!afk' => 'Sets a user status to afk',
-                            '!back' => 'removes afk status'
+                            '!back' => 'removes afk status',
+                            '!rules' => 'See the rules of the internet',
+                            '!lastseen' => 'See when someone was last seen in the channel'
                         );
 
                         $this->writeUser("These are the commands you can use:");
@@ -248,6 +243,9 @@ class IRC {
                         else
                             $this->writeChannel('I don\'t know that rule.');
                     }
+                    break;
+                case 'peter':
+                    $this->writeChannel('peter is fucking lam');
                     break;
                 case 'define':
                 case 'd':
@@ -341,13 +339,13 @@ class IRC {
         if (!is_writable($filename))
             fopen($filename, "w");
 
-            if (!$handle = fopen($filename, 'a'))
-                $this->error("Cannot open log ($filename)");
+        if (!$handle = fopen($filename, 'a'))
+            $this->error("Cannot open log ($filename)");
 
-            if (fwrite($handle, $log."\n") === FALSE)
-                $this->error("Cannot write to log ($filename)");
+        if (fwrite($handle, $log."\n") === FALSE)
+            $this->error("Cannot write to log ($filename)");
 
-            fclose($handle);
+        fclose($handle);
     }
 
     /**
@@ -393,9 +391,8 @@ class IRC {
             $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
             foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
                 if (strpos($data->getMessage(), $user.':') !== false) {
-                    if($this->users[$data->getReceiver()][$user]->status != 'online'){
-                        $this->writeUser($data->getUser().': '.$user.' is not available at the moment');
-                        $this->writeUser('User status is: '.$this->users[$data->getReceiver()][$user]->status);
+                    if($this->users[$data->getReceiver()][$user]->status != 'online' && isset($this->users[$data->getReceiver()][$user]->status)){
+                        $this->writeUser($data->getUser().': '.$user.' is not available at the moment, User status is: '.$this->users[$data->getReceiver()][$user]->status);
                     }
                 }
             }
@@ -417,6 +414,7 @@ class IRC {
             switch ($function) {
                 case 'JOIN':
                     //We can create actions here if a user joins a channel
+
                     $this->log('User ' . $data->getUser() . ' joined ' . $data->getReceiver());
                     $this->users[$data->getReceiver()][$data->getUser()] = new User(array(
                         'name' => $data->getUser(),
@@ -465,14 +463,14 @@ class IRC {
 
                         foreach($users as $user){
                             $userObj = new User(array(
-                                'name' => trim($user),
+                                'name' => trim(rtrim($user, '@')),
                                 'connection' => '',
                                 'status' => 'online',
                                 'lastSeen' => time(),
                                 'level' => 0,
                                 'group' => 'users'
                             ));
-                           $this->users[rtrim($data->getReceiver())][trim($user)] = $userObj;
+                            $this->users[rtrim($data->getReceiver())][trim(rtrim($user,'@'))] = $userObj;
                         }
                         break;
                     default:
