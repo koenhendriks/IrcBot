@@ -111,6 +111,18 @@ class IRC {
             }
         }
 
+        if(is_array($this->users[$data->getReceiver()])) {
+            $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
+            foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
+                if (strpos($data->getMessage(), $user) !== false) {
+                   if($this->users[$data->getReceiver()][$user]->status == 'afk'){
+                      $this->writeChannel($data->getUser().': '.$user.' is afk at the moment.');
+                    }
+                }
+            }
+        }
+
+
         //Check if a command is given by a user
         if(substr($data->getMessage(), 0, 1) == '!'){
 
@@ -162,11 +174,19 @@ class IRC {
                         $this->writeChannel($whois->getDomain($values[0]));
                     }
                     break;
+                case 'busy':
+                case 'dnd':
+                    $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'dnd';
+                    $this->writeChannel($data->getUser().' is now busy working! Why aren\'t you!?');
+                    break;
                 case 'away':
                 case 'afk':
                     $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'afk';
                     $this->writeChannel($data->getUser().' is now afk');
                     break;
+                case 'online':
+                case 'available':
+                case 'disturbable':
                 case 'back':
                     $status = trim($this->users[$data->getReceiver()][trim($data->getUser())]->status);
                     if($status == 'afk') {
@@ -214,6 +234,19 @@ class IRC {
                         $this->writeChannel($data->getUser().': Check your private messages.');
                     }else{
                         $this->writeUser('The help command can only run once every 10 seconds (anti-flood)');
+                    }
+                    break;
+                case 'rule':
+                case 'r':
+                    if(!$values)
+                        $this->writeChannel($data->getUser().': which rule?');
+                    else{
+                        $rules = new Rules();
+                        $rule = $rules->getRule(trim($values[0]));
+                        if($rule)
+                            $this->writeChannel('Rule '.trim($values[0]).': '.$rule);
+                        else
+                            $this->writeChannel('I don\'t know that rule.');
                     }
                     break;
                 case 'define':
@@ -352,7 +385,7 @@ class IRC {
     }
 
     /**
-     * Check if a user is afk when some one mentions him
+     * Check if a user is not online when some one mentions him
      */
     public function checkAfk(){
         $data = $this->data;
@@ -360,8 +393,9 @@ class IRC {
             $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
             foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
                 if (strpos($data->getMessage(), $user.':') !== false) {
-                    if($this->users[$data->getReceiver()][$user]->status == 'afk'){
-                        $this->writeUser($data->getUser().': '.$user.' is afk at the moment.');
+                    if($this->users[$data->getReceiver()][$user]->status != 'online'){
+                        $this->writeUser($data->getUser().': '.$user.' is not available at the moment');
+                        $this->writeUser('User status is: '.$this->users[$data->getReceiver()][$user]->status);
                     }
                 }
             }
