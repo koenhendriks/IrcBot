@@ -175,20 +175,26 @@ class IRC {
                     break;
                 case 'busy':
                 case 'dnd':
-                    $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'dnd';
-                    $this->writeChannel($data->getUser().' is now busy working! Why aren\'t you!?');
+                    if($this->users[$data->getReceiver()][trim($data->getUser(),'@+-')]->status == 'online') {
+                        $this->users[$data->getReceiver()][trim($data->getUser(), '@+-')]->status = 'dnd';
+                        $this->writeChannel($data->getUser() . ' is now busy working! Why aren\'t you!?');
+                    }
                     break;
                 case 'away':
                 case 'afk':
-                    $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'afk';
-                    $this->writeChannel($data->getUser().' is now afk');
+                    if($this->users[$data->getReceiver()][trim($data->getUser(),'@+-')]->status == 'online'){
+                        $this->users[$data->getReceiver()][trim($data->getUser(), '@+-')]->status = 'afk';
+                        $this->writeChannel($data->getUser().' is now afk');
+                    }
                     break;
                 case 'online':
                 case 'available':
                 case 'disturbable':
                 case 'back':
-                    $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'online';
-                    $this->writeChannel('Welcome back, ' . $data->getUser());
+                    if($this->users[$data->getReceiver()][trim($data->getUser(),'@+-')]->status != 'online') {
+                        $this->users[$data->getReceiver()][trim($data->getUser())]->status = 'online';
+                        $this->writeChannel('Welcome back, ' . $data->getUser());
+                    }
                     break;
                 case 'whoami':
                     $this->writeChannel('You are '.$data->getUser());
