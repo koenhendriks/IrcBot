@@ -9,7 +9,7 @@
 //IRC Settings
 define('NICKNAME', 'pouwer');
 define('REALNAME', 'Bierter Pouwer');
-define('IDENT', 'brouwer');
+define('IDENT', 'pouwer');
 define('NICK_PASS', 'botpass');
 define('HOSTNAME', 0);
 define('SERVER', 'irc.freenode.net');
