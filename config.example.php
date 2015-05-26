@@ -7,8 +7,8 @@
  */
 
 //IRC Settings
-define('NICKNAME', 'brouwer');
-define('REALNAME', 'Pieter Brouwer');
+define('NICKNAME', 'pouwer');
+define('REALNAME', 'Bierter Pouwer');
 define('IDENT', 'brouwer');
 define('NICK_PASS', 'botpass');
 define('HOSTNAME', 0);
