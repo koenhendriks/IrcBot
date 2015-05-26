@@ -19,6 +19,7 @@ while($data = socket_read($IRC->socket ,65000,PHP_NORMAL_READ)) {
     $IRC->setRawData($data);
     $IRC->joinChannels();
     $IRC->identify();
+
     if($IRC->isInChannel()){
         $IRC->handleURL();
         $IRC->checkAfk();

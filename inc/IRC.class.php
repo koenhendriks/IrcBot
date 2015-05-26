@@ -137,6 +137,9 @@ class IRC {
 
             //Execute given command.
             switch($cmd){
+                case 'print':
+                    print_r($this->users);
+                    break;
                 case 'random':
                     $random = new Random();
                     $this->writeChannel($random->getSentence());
@@ -155,7 +158,7 @@ class IRC {
                     } else {
                         if(is_object($this->users[$data->getReceiver()][trim($values[0])])){
                             $last = $this->users[$data->getReceiver()][trim($values[0])]->lastSeen;
-                            $this->writeChannel(trim($values[0]).' was last seen at '.date('H:i (l)', $last));
+                            $this->writeChannel(trim($values[0]).' was last seen at '.date('H:i (l m-y)', $last));
                         }
                     }
                     break;
@@ -218,7 +221,7 @@ class IRC {
                             '!whois' => ' Get whois information on a domain',
                             '!afk' => 'Sets a user status to afk',
                             '!back' => 'removes afk status',
-                            '!rules' => 'See the rules of the internet',
+                            '!rule' => 'See the rules of the internet',
                             '!lastseen' => 'See when someone was last seen in the channel'
                         );
 
@@ -232,6 +235,7 @@ class IRC {
                     }
                     break;
                 case 'rule':
+                case 'rules':
                 case 'r':
                     if(!$values)
                         $this->writeChannel($data->getUser().': which rule?');
@@ -388,8 +392,28 @@ class IRC {
     public function checkAfk(){
         $data = $this->data;
         if(is_array($this->users[$data->getReceiver()])) {
+
+            $lastSeen = $this->users[$data->getReceiver()][$data->getUser()]->lastSeen;
+            $timeDiff = time() - $lastSeen;
+
+            // Set time for last seen of the user that says a thing
             $this->users[$data->getReceiver()][$data->getUser()]->lastSeen = time();
+
+            //If then seconds have passed since the user was last seen
+            if($timeDiff > 10){
+                //and the user is saying a thing it means that he is not afk, so we welcome him back
+                if($this->users[$data->getReceiver()][trim($data->getUser(), '@+-')]->status != 'online'){
+                    $this->users[$data->getReceiver()][trim($data->getUser(), '@+-')]->status = 'online';
+                    $this->writeChannel('Welcome back, ' . $data->getUser());
+                }
+            }
+
+
+
+            //Loop through users
             foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
+
+                //Check if a ":" is in the string to see if $user is mentioned.
                 if (strpos($data->getMessage(), $user.':') !== false) {
                     if($this->users[$data->getReceiver()][$user]->status != 'online' && isset($this->users[$data->getReceiver()][$user]->status)){
                         $this->writeUser($data->getUser().': '.$user.' is not available at the moment, User status is: '.$this->users[$data->getReceiver()][$user]->status);
@@ -414,10 +438,10 @@ class IRC {
             switch ($function) {
                 case 'JOIN':
                     //We can create actions here if a user joins a channel
-
+                    $userName = trim($data->getUser(), '@+-');
                     $this->log('User ' . $data->getUser() . ' joined ' . $data->getReceiver());
-                    $this->users[$data->getReceiver()][$data->getUser()] = new User(array(
-                        'name' => $data->getUser(),
+                    $this->users[$data->getReceiver()][$userName] = new User(array(
+                        'name' => $userName,
                         'connection' => $data->getConnection(),
                         'status' => 'online',
                         'lastSeen' => time(),
@@ -463,14 +487,14 @@ class IRC {
 
                         foreach($users as $user){
                             $userObj = new User(array(
-                                'name' => trim(rtrim($user, '@')),
+                                'name' => trim(trim($user, '@+-')),
                                 'connection' => '',
                                 'status' => 'online',
                                 'lastSeen' => time(),
                                 'level' => 0,
                                 'group' => 'users'
                             ));
-                            $this->users[rtrim($data->getReceiver())][trim(rtrim($user,'@'))] = $userObj;
+                            $this->users[rtrim($data->getReceiver())][trim(trim($user,'@+-'))] = $userObj;
                         }
                         break;
                     default:
