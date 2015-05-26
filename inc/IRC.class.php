@@ -137,12 +137,19 @@ class IRC {
 
             //Execute given command.
             switch($cmd){
-                case 'print':
-                    print_r($this->users);
-                    break;
                 case 'random':
                     $random = new Random();
                     $this->writeChannel($random->getSentence());
+                    break;
+                case 'number':
+                    if(!$values || !is_numeric(trim($values[0])) || strlen(trim($values[0])) != 11){
+                        $this->writeChannel($data->getUser().' Usage: !number 31612345678');
+                    } else {
+                        if(is_array($values)) {
+                            $this->users[$data->getReceiver()][trim($data->getUser(), '@+-')]->number = trim($values[0]);
+                            $this->writeChannel($data->getUser() . ' Done! You\'ll receive a WhatsApp message when you get mentioned while being afk');
+                        }
+                    }
                     break;
                 case 'imdb':
                 case 'movie':
@@ -228,7 +235,8 @@ class IRC {
                             '!afk' => 'Sets a user status to afk',
                             '!back' => 'removes afk status',
                             '!rule' => 'See the rules of the internet',
-                            '!lastseen' => 'See when someone was last seen in the channel'
+                            '!lastseen' => 'See when someone was last seen in the channel',
+                            '!number' => 'Set your whatsapp number to get notifications if afk'
                         );
 
                         $this->writeUser("These are the commands you can use:");
@@ -414,15 +422,35 @@ class IRC {
                 }
             }
 
-
-
             //Loop through users
             foreach (array_keys($this->users[$data->getReceiver()]) as $user) {
 
                 //Check if a ":" is in the string to see if $user is mentioned.
                 if (strpos($data->getMessage(), $user.':') !== false) {
                     if($this->users[$data->getReceiver()][$user]->status != 'online' && isset($this->users[$data->getReceiver()][$user]->status)){
-                        $this->writeUser($data->getUser().': '.$user.' is not available at the moment, User status is: '.$this->users[$data->getReceiver()][$user]->status);
+
+                        //Check last send notification time
+                        $lastSend =   $this->users[$data->getReceiver()][trim($user,'@+-')]->lastSend;
+                        $sendDiff = time() - $lastSend;
+
+                        if($sendDiff > 3600) {
+
+                            //Longer then 60 minutes ago so send new notification
+                            $number = $this->users[$data->getReceiver()][trim($user, '@+-')]->number;
+                            $message1 = 'Hello ' . $user . ', You got mentioned in ' . $data->getReceiver() . ' by ' . $data->getUser() . ' in the following message: ';
+                            $message2 = $data->getMessage();
+                            if ($number != 0) {
+                                $this->users[$data->getReceiver()][trim($user, '@+-')]->lastSend = time();
+                                WhatsApp::sendMessage($number, $message1);
+                                WhatsApp::sendMessage($number, $message2);
+
+                                $this->writeUser($data->getUser().': '.$user.' status is: '.$this->users[$data->getReceiver()][$user]->status.', notification sent to his WhatsApp.');
+                            }else{
+                                $this->writeUser($data->getUser().': '.$user.' is not available at the moment, User status is: '.$this->users[$data->getReceiver()][$user]->status);
+                            }
+                        }else{
+                            $this->writeUser($data->getUser().': '.$user.' status is: '.$this->users[$data->getReceiver()][$user]->status.' notifcation won\'t be send for 60 minutes.');
+                        }
                     }
                 }
             }
@@ -452,7 +480,9 @@ class IRC {
                         'status' => 'online',
                         'lastSeen' => time(),
                         'level' => 0,
-                        'group' => 'users'
+                        'group' => 'users',
+                        'number' => 0,
+                        'lastSend' => time()-3600
                     ));
                     break;
                 case 'KICK':
@@ -498,7 +528,9 @@ class IRC {
                                 'status' => 'online',
                                 'lastSeen' => time(),
                                 'level' => 0,
-                                'group' => 'users'
+                                'group' => 'users',
+                                'number' => 0,
+                                'lastSend' => time()-3600
                             ));
                             $this->users[rtrim($data->getReceiver())][trim(trim($user,'@+-'))] = $userObj;
                         }

@@ -14,6 +14,8 @@ class User {
     public $lastSeen;
     public $level;
     public $group;
+    public $number;
+    public $lastSend;
 
     /**
      * Construct the user
@@ -121,6 +123,42 @@ class User {
     {
         $this->status = $status;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getNumber()
+    {
+        return $this->number;
+    }
+
+    /**
+     * @param mixed $number
+     */
+    public function setNumber($number)
+    {
+        $this->number = $number;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLastSend()
+    {
+        return $this->lastSend;
+    }
+
+    /**
+     * @param mixed $lastSend
+     */
+    public function setLastSend($lastSend)
+    {
+        $this->lastSend = $lastSend;
+    }
+
+
+
+
 
 
 
