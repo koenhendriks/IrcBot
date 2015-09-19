@@ -352,7 +352,7 @@ class IRC {
 
         echo "\n $log \n";
 
-        $filename = 'log-'.date('dmY',time()).'.txt';
+        $filename = 'logs/log-'.date('dmY',time()).'.txt';
 
         if (!is_writable($filename))
             fopen($filename, "w");
@@ -391,7 +391,14 @@ class IRC {
                     if($url['urlfix'])
                         $url['title'] .= ' ('.$url['url'].')';
 
-                    if($url['title'] != '')
+                    $size = $url['size'];
+
+                    if(is_numeric($size))
+                        $size = floor($size / 1000) .'KB';
+
+                    if($url['title'] == 'Title not found' || $url['title'] == '')
+                        $this->writeChannel('Size '.$size);
+                    elseif($url['title'] != '')
                         $this->writeChannel($url['title']);
                 }
             }else{

@@ -29,21 +29,28 @@ class Link {
 
         $size = $this->getFileSize($url);
 
+
+
         if(isset($size['status']) && $size['status'] != 200 && ($size['status'] < 300 || $size['status'] > 307)) {
-            return array('title' => 'Http error ' . $size['status'], 'urlfix' => false);
+            return array('title' => 'Http error ' . $size['status'], 'urlfix' => false, 'size' =>  $size['size']);
         }elseif(is_numeric($size['size']) && ($size['size'] == 0 || $size['size'] > 5000000)) {
-            return array('title' => 'File is to big', 'urlFix' => false);
+            return array('title' => 'File is to big', 'urlFix' => false, 'size' =>  $size['size']);
         }
 
         $str = file_get_contents($url);
         if(!$str){
-            return array('title' => 'URL error', 'domain' => 'URL error', 'urlfix' => 'URL error', 'url' => 'Url error');
+            return array('title' => 'URL error', 'domain' => 'URL error', 'urlfix' => 'URL error', 'url' => 'Url error', 'size' => 'URL Error');
         }
 
         if(strlen($str)>0){
             preg_match("/\<title\>(.*)\<\/title\>/",$str,$title);
             $parse = parse_url($url);
-            return array('title' => html_entity_decode($title[1]), 'domain' => $parse['host'], 'urlfix' => $urlFix, 'url' => $url);
+
+            //Make sure we actually find a title
+            if(count($title) < 2)
+                $title = ['Title not found','Title not found'];
+
+            return array('title' => html_entity_decode($title[1]), 'domain' => $parse['host'], 'urlfix' => $urlFix, 'url' => $url, 'size' =>  $size['size']);
         }
     }
 
@@ -65,7 +72,7 @@ class Link {
         curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
         curl_setopt( $curl, CURLOPT_FOLLOWLOCATION, true );
         curl_setopt( $curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36');
-        curl_setopt( $curl, CURLOPT_TIMEOUT_MS,3000);
+        curl_setopt( $curl, CURLOPT_TIMEOUT_MS,10000);
 
         $data = curl_exec( $curl );
         curl_close( $curl );
