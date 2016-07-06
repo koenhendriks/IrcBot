@@ -19,4 +19,3 @@ $channels = array('#tesingmybot');
 //Admin Settings
 define('ADMINNICK', 'Chameleon');
 define('ADMINPASS', 'habbo123');
-define('WHAPPKEY', 'xxxxxxxxxxxxxxxxxxx');

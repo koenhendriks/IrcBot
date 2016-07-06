@@ -141,27 +141,21 @@ class IRC {
                     $random = new Random();
                     $this->writeChannel($random->getSentence());
                     break;
-                case 'number':
-                    if(!$values || !is_numeric(trim($values[0])) || strlen(trim($values[0])) != 11){
-                        $this->writeChannel($data->getUser().' Usage: !number 31612345678');
-                    } else {
-                        if(is_array($values)) {
-                            $this->users[$data->getReceiver()][trim($data->getUser(), '@+-')]->number = trim($values[0]);
-                            $this->writeChannel($data->getUser() . ' Done! You\'ll receive a WhatsApp message when you get mentioned while being afk');
-                        }
-                    }
-                    break;
                 case 'imdb':
                 case 'movie':
                     $movie  = new Movie();
-                    if (isset($rawValues))
-                        $this->writeChannel($movie->getByString($rawValues));
-                    else
-                        $this->writeChannel("Movie was not found.");
+                    if(!$values){
+                        $this->writeChannel($data->getUser().': What Movie ?');
+                    } else {
+                        if (isset($rawValues))
+                            $this->writeChannel($movie->getByString($rawValues));
+                        else
+                            $this->writeChannel("Movie was not found.");
+                    }
                     break;
                 case 'lastseen':
                     if(!$values){
-                        $this->writeChannel($data->getUser().' Who should i check?');
+                        $this->writeChannel($data->getUser().': Who should i check?');
                     } else {
                         if(is_object($this->users[$data->getReceiver()][trim($values[0])])){
                             $last = $this->users[$data->getReceiver()][trim($values[0])]->lastSeen;
@@ -170,7 +164,7 @@ class IRC {
                     }
                     break;
                 case 'about':
-                    $this->writeChannel('Hello, I\'m '.$this->getRealname().'. I\'m here to help you.');
+                    $this->writeChannel('Hello, I\'m '.$this->getRealname().'. I\'m here to help you '.$data->getUser().'.');
                     break;
                 case 'whois':
                     if(!$values) {
@@ -208,7 +202,7 @@ class IRC {
                     break;
                 case 'xkcd':
                     if(!$values)
-                        $this->writeChannel($data->getUser().': Which xkcd?');
+                        $this->writeChannel($data->getUser().': Which xkcd (number)?');
                     else{
                         if(isset($rawValues)){
                             $xkcd = new Xkcd($rawValues);
@@ -223,7 +217,6 @@ class IRC {
 
                     if((time() - $this->__get('helpTime')) > 10) {
                         $this->__set('helpTime', time());
-
                         $commands = array(
                             '!random' => 'Say something random',
                             '!about' => ' About me :)',
@@ -233,10 +226,10 @@ class IRC {
                             '!movie or !imdb' => ' Find movie info from text',
                             '!whois' => ' Get whois information on a domain',
                             '!afk' => 'Sets a user status to afk',
-                            '!back' => 'removes afk status',
+                            '!busy or !dnd' => 'Sets a user status to busy / do not disturb',
+                            '!back' => 'removes afk and/or do not disturb status',
                             '!rule' => 'See the rules of the internet',
-                            '!lastseen' => 'See when someone was last seen in the channel',
-                            '!number' => 'Set your whatsapp number to get notifications if afk'
+                            '!lastseen' => 'See when someone was last seen in the channel'
                         );
 
                         $this->writeUser("These are the commands you can use:");
@@ -443,15 +436,15 @@ class IRC {
                         if($sendDiff > 3600) {
 
                             //Longer then 60 minutes ago so send new notification
-                            $number = $this->users[$data->getReceiver()][trim($user, '@+-')]->number;
+                            $notificationEnabled = false; // TODO create new notification system
                             $message1 = 'Hello ' . $user . ', You got mentioned in ' . $data->getReceiver() . ' by ' . $data->getUser() . ' in the following message: ';
                             $message2 = $data->getMessage();
-                            if ($number != 0) {
-                                $this->users[$data->getReceiver()][trim($user, '@+-')]->lastSend = time();
-                                WhatsApp::sendMessage($number, $message1);
-                                WhatsApp::sendMessage($number, $message2);
 
-                                $this->writeUser($data->getUser().': '.$user.' status is: '.$this->users[$data->getReceiver()][$user]->status.', notification sent to his WhatsApp.');
+                            if ($notificationEnabled) {
+                                $this->users[$data->getReceiver()][trim($user, '@+-')]->lastSend = time();
+                                // TODO create new notification system
+
+                                $this->writeUser($data->getUser().': '.$user.' status is: '.$this->users[$data->getReceiver()][$user]->status.', notification sent.');
                             }else{
                                 $this->writeUser($data->getUser().': '.$user.' is not available at the moment, User status is: '.$this->users[$data->getReceiver()][$user]->status);
                             }
