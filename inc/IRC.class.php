@@ -111,7 +111,7 @@ class IRC {
             }
         }
 
-        if(is_array($this->users[$data->getReceiver()])) {
+        if(isset($this->users[$data->getReceiver()]) && is_array($this->users[$data->getReceiver()])) {
             $channelUser = $this->users[$data->getReceiver()][$data->getUser()];
             if(!is_object($channelUser))
                 $channelUser = new User(array('lastseen' => time()));
@@ -412,7 +412,7 @@ class IRC {
      */
     public function checkAfk(){
         $data = $this->data;
-        if(is_array($this->users[$data->getReceiver()])) {
+        if(isset($this->users[$data->getReceiver()]) && is_array($this->users[$data->getReceiver()])) {
 
             $lastSeen = $this->users[$data->getReceiver()][$data->getUser()]->lastSeen;
             $timeDiff = time() - $lastSeen;
